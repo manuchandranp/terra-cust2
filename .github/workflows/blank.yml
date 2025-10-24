@@ -87,5 +87,7 @@ jobs:
 
           cat main.tf
       # Step 9: Initialize Terraform to download providers and modules
-   - name: Terraform Init
+   - name: Terraform Configuration
      run: jf terraform-config  
+   - name: Terraform Init
+     run: jf terraform init  
