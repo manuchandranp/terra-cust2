@@ -117,7 +117,7 @@ jobs:
      uses: hashicorp/setup-terraform@v2 
    - name: Configure Artifactory Credentials via tfrc.json
      env:
-          ACCESS_TOKEN: ${{ needs.download-artifact.outputs.access_token }}
+          ACCESS_TOKEN: ${{ needs.publish-artifact.outputs.access_token }}
           JF_URL: ${{ env.JF_URL }}
      run: |
           # 1. Create the .terraform.d directory if it doesn't exist (Terraform standard location)
