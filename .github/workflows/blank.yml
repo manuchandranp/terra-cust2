@@ -90,4 +90,4 @@ jobs:
    - name: Terraform Configuration
      run: jf terraform-config  
    - name: Terraform Init
-     run: jf terraform init  
+     run: terraform init  
