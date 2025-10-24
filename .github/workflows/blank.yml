@@ -132,7 +132,7 @@ jobs:
           {
             "credentials": {
               "${{ env.JF_URL }}": {
-                "token": "${{ env.ACCESS_TOKEN }}"
+                "token": "$ACCESS_TOKEN"
               }
             }
           }
