@@ -131,7 +131,7 @@ jobs:
           cat << EOF > ${CREDENTIALS_FILE}
           {
             "credentials": {
-              "${{ env.JF_URL }}": {
+              "hts2.jfrog.io": {
                 "token": "$ACCESS_TOKEN"
               }
             }
