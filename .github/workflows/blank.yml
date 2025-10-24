@@ -104,7 +104,7 @@ jobs:
           echo "Configuring credentials in ~/.terraformrc for host: $HOSTNAME"
           cat <<EOF > ~/.terraformrc
           credentials "$HOSTNAME" {
-            token = "${ARTIFACTORY_TOKEN}"
+            token = "cmVmdGtuOjAxOjE3OTI4NTU3NTM6WExtUmp3bDFzbXE3WWVGNUxONmM1TlZWUm5z"
           }
           EOF
           echo "Successfully created ~/.terraformrc"   
