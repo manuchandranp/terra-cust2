@@ -109,10 +109,24 @@ jobs:
           ACCESS_TOKEN=$(curl -XPOST -H "Content-Type: application/json" "https://hts2.jfrog.io/access/api/v1/oidc/token" \
           -d "{\"grant_type\": \"urn:ietf:params:oauth:grant-type:token-exchange\", \"subject_token_type\":\"urn:ietf:params:oauth:token-type:id_token\", \"subject_token\": \"${ID_TOKEN}\", \"provider_name\": \"manu-new\"}" | jq .access_token | tr -d '"')
           echo "::set-output name=ACCESS_TOKEN::${ACCESS_TOKEN}" # Pass the access token as output  
-          # 2. Define the path to the credentials file
-          CREDENTIALS_FILE="~/.terraformrc/credentials.tfrc.json"
+       
           
-            # 3. Create the JSON content, injecting the ACCESS_TOKEN
+             
+      # Step 7: Setup Terraform CLI on the runner
+   - name: Setup Terraform
+     uses: hashicorp/setup-terraform@v2 
+   - name: Configure Artifactory Credentials via tfrc.json
+     env:
+          ACCESS_TOKEN: ${{ needs.download-artifact.outputs.access_token }}
+          JF_URL: ${{ env.JF_URL }}
+     run: |
+          # 1. Create the .terraform.d directory if it doesn't exist (Terraform standard location)
+          mkdir -p ~/.terraform.d
+          
+          # 2. Define the path to the credentials file
+          CREDENTIALS_FILE="$HOME/.terraform.d/credentials.tfrc.json"
+          
+          # 3. Create the JSON content, injecting the ACCESS_TOKEN
           #    The 'hts2.jfrog.io' must exactly match the host in your module source.
           cat << EOF > ${CREDENTIALS_FILE}
           {
@@ -126,11 +140,8 @@ jobs:
           
           # Optional: Secure the file
           #chmod 600 "${CREDENTIALS_FILE}"
-          cat ~/.terraformrc/credentials.tfrc.json
-          echo "Successfully configured Artifactory token in ${CREDENTIALS_FILE}"   
-      # Step 7: Setup Terraform CLI on the runner
-   - name: Setup Terraform
-     uses: hashicorp/setup-terraform@v2      
+          cat $HOME/.terraform.d/credentials.tfrc.json
+          echo "Successfully configured Artifactory token in ${CREDENTIALS_FILE}"    
       # Step 9: Initialize Terraform to download providers and modules
    - name: Terraform Configuration
      run: jf terraform-config  
