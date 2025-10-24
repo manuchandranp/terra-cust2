@@ -1,0 +1,94 @@
+
+name: "Artifactory Generic OIDC Multi-Job"
+
+on:
+ workflow_dispatch:
+ push:
+
+env:
+ OIDC_PROVIDER: 'manu-new'
+ OIDC_AUDIENCE: 'newmanu'
+ JF_URL: "https://hts2.jfrog.io"
+
+permissions:
+ contents: read
+ id-token: write
+
+jobs:
+ publish-artifact:
+  runs-on: ubuntu-latest
+
+  steps:
+   - name: Checkout Repository
+     uses: actions/checkout@v4
+
+   - name: Set up JFrog CLI with OIDC
+     uses: jfrog/setup-jfrog-cli@v4
+     env:
+      JF_URL: ${{ env.JF_URL }}
+     with:
+      oidc-provider-name: ${{ env.OIDC_PROVIDER }}
+      oidc-audience: ${{ env.OIDC_AUDIENCE }}
+
+   # --- Publishing a Terraform Module ---
+   - name: Archive Terraform Module
+     run: |
+      MODULE_VERSION=${{ github.ref_name }}
+      MODULE_NAME='vpc'
+      MODULE_NAMESPACE='myorg'
+      ZIP_FILE="${MODULE_NAME}-aws-${MODULE_VERSION}.zip"
+      zip -r $ZIP_FILE . -x '*.git*'
+      echo "ZIPPING complete. File: $ZIP_FILE"
+      echo "MODULE_NAMESPACE=$MODULE_NAMESPACE" >> $GITHUB_ENV
+      echo "MODULE_NAME=$MODULE_NAME" >> $GITHUB_ENV
+      echo "MODULE_VERSION=$MODULE_VERSION" >> $GITHUB_ENV
+      echo "ZIP_FILE=$ZIP_FILE" >> $GITHUB_ENV
+      ls -la $ZIP_FILE
+
+   - name: Publish Terraform Module to Artifactory
+     run: |
+      #jf rt u ${{ env.ZIP_FILE }} manu-terra-module/${{ env.MODULE_NAMESPACE }}/${{ env.MODULE_NAME }}/aws/${{ env.MODULE_VERSION }}
+      jf rt u ${{ env.ZIP_FILE }} manu-terra-module/${{ env.MODULE_NAMESPACE }}/${{ env.MODULE_NAME }}/aws/${{ env.MODULE_VERSION }}/
+
+   # Step 5: Collect environment variables and git details to enrich the build info
+   - name: Publish Build Info
+     run: |
+          # Collect environment variables associated with the build
+          jf rt build-collect-env
+          # Add git revision and URL to the build info
+          jf rt build-add-git
+          # Publish the final build information to Artifactory
+          jf rt build-publish
+    # Step 6: Create main.tf to test module resolution
+   - name: Print Module URL
+     run: echo "${{ env.JF_URL }}/manu-terra-module__${{ env.MODULE_NAMESPACE }}/${{ env.MODULE_NAME }}/aws"
+
+   - name: Create main.tf for testing
+
+     run: |
+
+          # Create a basic Terraform configuration that uses the module we just published.
+
+          # This allows `terraform init` to test the download from Artifactory.
+
+          # The source URL must include the /artifactory/ context root for direct downloads.
+
+          cat <<EOF > main.tf
+
+          module "vpc" {
+
+            source = "hts2.jfrog.io/manu-terra-module__${{ env.MODULE_NAMESPACE }}/${{ env.MODULE_NAME }}/aws"
+
+          }
+
+          EOF
+
+          echo "Created main.tf for testing:"
+
+          cat main.tf
+      # Step 7: Setup Terraform CLI on the runner
+   - name: Setup Terraform
+     uses: hashicorp/setup-terraform@v2
+      # Step 9: Initialize Terraform to download providers and modules
+   - name: Terraform Init
+     run: terraform init   
