@@ -86,6 +86,9 @@ jobs:
           echo "Created main.tf for testing:"
 
           cat main.tf
+      # Step 7: Setup Terraform CLI on the runner
+   - name: Setup Terraform
+     uses: hashicorp/setup-terraform@v2      
       # Step 9: Initialize Terraform to download providers and modules
    - name: Terraform Configuration
      run: jf terraform-config  
